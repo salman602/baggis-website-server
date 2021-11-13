@@ -15,7 +15,6 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 
-
 async function run() {
     try {
         await client.connect();
@@ -33,41 +32,49 @@ async function run() {
             res.json(products);
         });
 
-
+        // products post
+        app.post('/products', async (req, res) => {
+            const product = req.body;
+            const result = await productsCollection.insertOne(product);
+            res.json(result);
+        });
 
         // orders get
         app.get('/orders', async (req, res) => {
-            const email = req.query.email;
-            const query = { email };
-            const cursor = ordersCollection.find(query);
+            const cursor = ordersCollection.find({});
             const orders = await cursor.toArray();
             res.json(orders);
-        })
+        });
+        // get orders filter by email
+        app.get('/orders/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const cursor = ordersCollection.find(query);
+            const orders = await cursor.toArray()
+            res.json(orders)
+        });
 
         // order post
         app.post('/orders', async (req, res) => {
             const order = req.body;
             const result = await ordersCollection.insertOne(order);
             res.json(result);
-        })
+        });
 
         // DELETE a order
         app.delete('/orders/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const result = await ordersCollection.deleteOne(query);
-            console.log('deleting order with id', id);
             res.json(result)
-        })
-
+        });
 
         // get review
         app.get('/reviews', async (req, res) => {
             const cursor = reviewsCollection.find({});
             const reviews = await cursor.toArray();
             res.json(reviews);
-        })
-
+        });
 
         // review post
         app.post('/reviews', async (req, res) => {
@@ -88,7 +95,7 @@ async function run() {
                 isAdmin = true;
             }
             res.json({ admin: isAdmin })
-        })
+        });
 
         // users post for email-password authentication
         app.post('/users', async (req, res) => {
@@ -107,7 +114,6 @@ async function run() {
             const updateDoc = { $set: user };
             const result = await usersCollection.updateOne(filter, updateDoc, options);
             res.json(result)
-
         });
 
         // set admin role
@@ -119,16 +125,12 @@ async function run() {
             res.json(result);
         });
 
-
     }
     finally {
         // await client.close();
     }
 }
 run().catch(console.dir);
-
-
-
 
 
 app.get('/', (req, res) => {
