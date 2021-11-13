@@ -24,13 +24,16 @@ async function run() {
         const productsCollection = database.collection("products");
         const ordersCollection = database.collection("orders");
         const reviewsCollection = database.collection("reviews");
+        const usersCollection = database.collection("users");
 
-
+        // products get
         app.get('/products', async (req, res) => {
             const cursor = productsCollection.find({});
             const products = await cursor.toArray();
             res.json(products);
         });
+
+
 
         // orders get
         app.get('/orders', async (req, res) => {
@@ -48,12 +51,12 @@ async function run() {
             res.json(result);
         })
 
-        // DELETE a Booking
+        // DELETE a order
         app.delete('/orders/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const result = await ordersCollection.deleteOne(query);
-            console.log('deleting booking with id', id);
+            console.log('deleting order with id', id);
             res.json(result)
         })
 
@@ -73,8 +76,48 @@ async function run() {
             const result = await reviewsCollection.insertOne(review);
             console.log(result)
             res.json(result)
+        });
+
+        // get user with admin role
+        app.get('/users/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const user = await usersCollection.findOne(query);
+            let isAdmin = false;
+            if (user?.role === 'admin') {
+                isAdmin = true;
+            }
+            res.json({ admin: isAdmin })
         })
 
+        // users post for email-password authentication
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            console.log(user)
+            const result = await usersCollection.insertOne(user);
+            console.log(result)
+            res.json(result)
+        });
+
+        // users update or insert(if new) for google sign in authentication
+        app.put('/users', async (req, res) => {
+            const user = req.body;
+            const filter = { email: user.email };
+            const options = { upsert: true };
+            const updateDoc = { $set: user };
+            const result = await usersCollection.updateOne(filter, updateDoc, options);
+            res.json(result)
+
+        });
+
+        // set admin role
+        app.put('/users/admin', async (req, res) => {
+            const user = req.body;
+            const filter = { email: user.email };
+            const updateDoc = { $set: { role: "admin" } };
+            const result = await usersCollection.updateOne(filter, updateDoc);
+            res.json(result);
+        });
 
 
     }
