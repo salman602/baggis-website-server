@@ -69,6 +69,19 @@ async function run() {
             res.json(result)
         });
 
+
+        // DELETE a order
+        app.put('/orders/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log('updating order', id)
+            const query = { _id: ObjectId(id) };
+            const updateDoc = { $set: { status: "shipped" } };
+            const result = await ordersCollection.updateOne(query, updateDoc);
+            console.log(result)
+            res.json(result)
+
+        });
+
         // get review
         app.get('/reviews', async (req, res) => {
             const cursor = reviewsCollection.find({});
